@@ -18,12 +18,9 @@ public class BoidManager : MonoBehaviour
         GameObject[] auxList = GameObject.FindGameObjectsWithTag(boidTag);
         foreach (GameObject go in auxList)
         {
-            boids.Add(go.GetComponent<Boid>());
-        }
-
-        foreach (Boid b in boids)
-        {
-            b.Initialize(settings, null);
+            Boid auxB = go.GetComponent<Boid>();
+            boids.Add(auxB);
+            auxB.Initialize(settings, null);
         }
 
     }
