@@ -1,27 +1,39 @@
-﻿// Each #kernel tells which function to compile; you can have many kernels
-//This indicates the entry point for our program (main function)
-//we can get any of the compiled kernels in c# by using the function Shader.FindKernel("kernel_name")
-#pragma kernel CSMain
+﻿#pragma kernel CSMain
+static const int threadGroupSize = 1024;
 
-//Read-Write structured buffer made of float3
-//The structured buffer can be of any basic type or of a user declared struct
-RWStructuredBuffer<float3> Result;
+struct Boid {
+    float3 position;
+    float3 direction;
 
-//Struct that contains a position and a velocity that we can use to create a structured buffer
-//In c# we must declare the variables in the same order (and make sure they have the same memory layout if they are composite types!!!)
-struct GameObjInf{
-	float3 position;
-	float3 velocity;
+    float3 flockHeading;
+    float3 flockCentre;
+    float3 separationHeading;
+    int numFlockmates;
 };
-//StrucuredBuffer made up of our own struct objects
-RWStructuredBuffer<GameObjInf> CoolerResult;
 
-float deltaTime;
-//This specifies our thread group size
-//GPUs allow to create thread groups in multiple dimensions for easier management of 3D data calculations, in our case we will stick to 1D
-[numthreads(128,1,1)]
-void CSMain (uint3 id : SV_DispatchThreadID){
-    // TODO: insert actual code here!
+RWStructuredBuffer<Boid> boids;
+int numBoids;
+float viewRadius;
+float avoidRadius;
 
-	CoolerResult[id.x].position = deltaTime* CoolerResult[id.x].velocity+ CoolerResult[id.x].position;
+[numthreads(threadGroupSize,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    for (int indexBoid = 0; indexBoid < numBoids; indexBoid ++) {
+        if (id.x != indexBoid) {
+            Boid boidB = boids[indexBoid];
+            float3 offset = boidB.position - boids[id.x].position;
+            float sqrDst = offset.x * offset.x + offset.y * offset.y + offset.z * offset.z;
+
+            if (sqrDst < viewRadius * viewRadius) {
+                boids[id.x].numFlockmates += 1;
+                boids[id.x].flockHeading += boidB.direction;
+                boids[id.x].flockCentre += boidB.position;
+
+                if (sqrDst < avoidRadius * avoidRadius) {
+                    boids[id.x].separationHeading -= offset / sqrDst;
+                }
+            }
+        }
+    }
 }

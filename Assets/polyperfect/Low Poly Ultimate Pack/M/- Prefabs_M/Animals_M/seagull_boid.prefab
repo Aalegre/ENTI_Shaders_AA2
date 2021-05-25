@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 3341784}
   - component: {fileID: 2336844}
   - component: {fileID: 64156138915029614}
+  - component: {fileID: 7741219038994274059}
   m_Layer: 0
-  m_Name: seagull
+  m_Name: seagull_boid
   m_TagString: Seagull
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -97,3 +98,21 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300002, guid: 21afbc3e55fb86b48b46caaf6e6410a3, type: 3}
+--- !u!114 &7741219038994274059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 159870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 734a69fe91bd0e0498a98f91ee206552, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  position: {x: 0, y: 0, z: 0}
+  forward: {x: 0, y: 0, z: 0}
+  avgFlockHeading: {x: 0, y: 0, z: 0}
+  avgAvoidanceHeading: {x: 0, y: 0, z: 0}
+  centreOfFlockmates: {x: 0, y: 0, z: 0}
+  numPerceivedFlockmates: 0
