@@ -4,6 +4,16 @@ using UnityEngine;
 
 public class DrawTrack : MonoBehaviour
 {
+    [System.Serializable]
+    public class Brush
+    {
+        public Transform transform;
+        [Range(1, 500)]
+        public float brushSize;
+        [Range(0, 1)]
+        public float brushStrength;
+    }
+    public Brush[] brushes;
     private RenderTexture splatmap;
     public Shader drawShader;
     private Material drawMaterial;
@@ -11,11 +21,6 @@ public class DrawTrack : MonoBehaviour
     public GameObject terrain;
     RaycastHit groundHit;
     int layerMask;
-
-    [Range(1, 500)]
-    public float brushSize;
-    [Range(0, 1)]
-    public float brushStrength;
 
     // Start is called before the first frame update
     void Start()
@@ -29,16 +34,19 @@ public class DrawTrack : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Physics.Raycast(transform.position, Vector3.down, out groundHit, 1f, layerMask))
+        foreach (Brush brush in brushes)
         {
-            drawMaterial.SetVector("_Coordinates", new Vector4(groundHit.textureCoord.x, groundHit.textureCoord.y, 0, 0));
-            drawMaterial.SetFloat("_Strength", brushStrength);
-            drawMaterial.SetFloat("_Size", brushSize);
-            RenderTexture temp = RenderTexture.GetTemporary(splatmap.width, splatmap.height, 0, RenderTextureFormat.ARGBFloat);
+            if (Physics.Raycast(brush.transform.position, Vector3.down, out groundHit, 1f, layerMask))
+            {
+                drawMaterial.SetVector("_Coordinates", new Vector4(groundHit.textureCoord.x, groundHit.textureCoord.y, 0, 0));
+                drawMaterial.SetFloat("_Strength", brush.brushStrength);
+                drawMaterial.SetFloat("_Size", brush.brushSize);
+                RenderTexture temp = RenderTexture.GetTemporary(splatmap.width, splatmap.height, 0, RenderTextureFormat.ARGBFloat);
 
-            Graphics.Blit(splatmap, temp);
-            Graphics.Blit(temp, splatmap, drawMaterial);
-            RenderTexture.ReleaseTemporary(temp);
+                Graphics.Blit(splatmap, temp);
+                Graphics.Blit(temp, splatmap, drawMaterial);
+                RenderTexture.ReleaseTemporary(temp);
+            }
         }
     }
 }
