@@ -74,7 +74,7 @@
 				float3 diffuseTex = tex2D(_MainTex, (i.uv * _MainTex_ST.xy) + _MainTex_ST.zw) * _objectColor;
 				float3 lightColor;
 				float3 lightDir;
-                fixed shadow;
+                float shadow;
 
 
 				lightDir = _WorldSpaceLightPos0.xyz;
