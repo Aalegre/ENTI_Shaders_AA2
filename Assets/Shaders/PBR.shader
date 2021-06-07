@@ -2,11 +2,13 @@
 {
 	Properties
 	{
-		 _objectColor("Main color",Color) = (0,0,0,1)
 		 _ambientInt("Ambient int", Range(0,1)) = 0.25
 		 _ambientColor("Ambient Color", Color) = (0,0,0,1)
 
+		 _objectColor("Main color",Color) = (0,0,0,1)
+		 _MainTex("Texture", 2D) = "white" {}
 		 _diffuseInt("Diffuse int", Range(0,1)) = 1
+
 		_specularAlpha("Specular alpha",Range(0,1)) = 0.0
 		_fresnelQ("Fresnel q",Float) = 1.0
 
@@ -59,18 +61,17 @@
 			float _specularAlpha;
 			float _fresnelQ;
 
+            sampler2D _MainTex;
+            float4 _MainTex_ST;
+
             fixed4 frag (v2f i) : SV_Target
             {
-				
-
-				//3 phong model light components
-                //We assign color to the ambient term		
-				fixed4 ambientComp = _ambientColor * _ambientInt;//We calculate the ambient term based on intensity
 				fixed4 finalColor = _ambientColor * _ambientInt;
 				
 				float3 viewVec = normalize(_WorldSpaceCameraPos - i.wpos);
 				float3 difuseComp = float4(0, 0, 0, 1);
 				float3 specularComp = float4(0, 0, 0, 1);
+				float3 diffuseTex = tex2D(_MainTex, (i.uv * _MainTex_ST.xy) + _MainTex_ST.zw) * _objectColor;
 				float3 lightColor;
 				float3 lightDir;
                 fixed shadow;
@@ -79,7 +80,7 @@
 				lightDir = _WorldSpaceLightPos0.xyz;
 				lightColor = _LightColor0.rgb;
 				shadow = SHADOW_ATTENUATION(i);
-				difuseComp = lightColor * _diffuseInt * clamp(dot(lightDir, i.wnormal), 0, 1);
+				difuseComp = lightColor * _diffuseInt * diffuseTex * clamp(dot(lightDir, i.wnormal), 0, 1);
 				specularComp = lightColor * BRDF(_specularAlpha, _fresnelQ, viewVec, i.wnormal, lightDir);
 				finalColor += clamp(float4(shadow * (difuseComp + specularComp), 1), 0, 1);
 
@@ -90,13 +91,13 @@
 				//		unity_4LightPosZ0[index]) - i.wpos));
 				//	lightColor = unity_LightColor[index];
 				//	shadow = unity_4LightAtten0[index];
-				//	difuseComp = lightColor * _diffuseInt * clamp(dot(lightDir, i.wnormal), 0, 1);
+				//	difuseComp = lightColor * _diffuseInt * diffuseTex * clamp(dot(lightDir, i.wnormal), 0, 1);
 				//	specularComp = lightColor * BRDF(_specularAlpha, _fresnelQ, viewVec, i.wnormal, lightDir);
 				//	finalColor += clamp(float4(shadow * (difuseComp + specularComp), 1), 0, 1);
 				//}
 				
                 
-				return finalColor * _objectColor;
+				return finalColor;
             }
             ENDCG
         }
