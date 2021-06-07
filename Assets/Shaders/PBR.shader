@@ -10,14 +10,6 @@
 		_specularAlpha("Specular alpha",Range(0,1)) = 0.0
 		_fresnelQ("Fresnel q",Float) = 1.0
 
-		_pointLightPos("Point light Pos",Vector) = (0,0,0,1)
-		_pointLightColor("Point light Color",Color) = (0,0,0,1)
-		_pointLightIntensity("Point light Intensity",Float) = 1
-
-		_directionalLightDir("Directional light Dir",Vector) = (0,1,0,1)
-		_directionalLightColor("Directional light Color",Color) = (0,0,0,1)
-		_directionalLightIntensity("Directional light Intensity",Float) = 1
-
     }
     SubShader
     {
@@ -28,8 +20,6 @@
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-			#pragma multi_compile __ POINT_LIGHT_ON 
-			#pragma multi_compile __ DIRECTIONAL_LIGHT_ON
             #include "UnityCG.cginc"
             #include "Lighting.cginc"
             #include "AutoLight.cginc"
@@ -69,14 +59,6 @@
 			float _specularAlpha;
 			float _fresnelQ;
 
-			float4 _pointLightPos;
-			float4 _pointLightColor;
-			float _pointLightIntensity;
-
-			float4 _directionalLightDir;
-			float4 _directionalLightColor;
-			float _directionalLightIntensity;
-
             fixed4 frag (v2f i) : SV_Target
             {
 				
@@ -84,75 +66,35 @@
 				//3 phong model light components
                 //We assign color to the ambient term		
 				fixed4 ambientComp = _ambientColor * _ambientInt;//We calculate the ambient term based on intensity
-				fixed4 finalColor = ambientComp;
+				fixed4 finalColor = _ambientColor * _ambientInt;
 				
 				float3 viewVec = normalize(_WorldSpaceCameraPos - i.wpos);
 				float3 difuseComp = float4(0, 0, 0, 1);
 				float3 specularComp = float4(0, 0, 0, 1);
 				float3 lightColor;
 				float3 lightDir;
-                fixed shadow = SHADOW_ATTENUATION(i);
+                fixed shadow;
 
 
 				lightDir = _WorldSpaceLightPos0.xyz;
-				float brdf = BRDF(_specularAlpha, _fresnelQ, viewVec, i.wnormal, lightDir);
-				difuseComp = lightColor * _diffuseInt * clamp(dot(lightDir, i.wnormal),0,1);
-				return fixed4(1,1,1,1) * brdf * shadow;
-#if DIRECTIONAL_LIGHT_ON
+				lightColor = _LightColor0.rgb;
+				shadow = SHADOW_ATTENUATION(i);
+				difuseComp = lightColor * _diffuseInt * clamp(dot(lightDir, i.wnormal), 0, 1);
+				specularComp = lightColor * BRDF(_specularAlpha, _fresnelQ, viewVec, i.wnormal, lightDir);
+				finalColor += clamp(float4(shadow * (difuseComp + specularComp), 1), 0, 1);
 
-				/*
-				//Directional light properties
-				lightColor = _directionalLightColor.xyz;
-				lightDir = normalize(_directionalLightDir);
-
-				//Diffuse componenet
-				difuseComp = lightColor * _diffuseInt * clamp(dot(lightDir, i.worldNormal),0,1);
-
-				//Specular component	
-				viewVec = normalize(_WorldSpaceCameraPos - i.wPos);
-
-				//Specular component
-				//phong
-				//float3 halfVec = reflect(-lightDir, i.worldNormal);
-				//fixed4 specularComp = lightColor * pow(clamp(dot(halfVec, viewVec),0,1), _specularAlpha);
+				//for (int index = 0; index < 4; index++)
+				//{
+				//	lightDir = normalize((float3(unity_4LightPosX0[index],
+				//		unity_4LightPosY0[index],
+				//		unity_4LightPosZ0[index]) - i.wpos));
+				//	lightColor = unity_LightColor[index];
+				//	shadow = unity_4LightAtten0[index];
+				//	difuseComp = lightColor * _diffuseInt * clamp(dot(lightDir, i.wnormal), 0, 1);
+				//	specularComp = lightColor * BRDF(_specularAlpha, _fresnelQ, viewVec, i.wnormal, lightDir);
+				//	finalColor += clamp(float4(shadow * (difuseComp + specularComp), 1), 0, 1);
+				//}
 				
-				//blinnPhong
-				halfVec = normalize(viewVec + lightDir);
-				specularComp = lightColor * BRDF(_specularAlpha, _fresnelQ, viewVec, i.worldNormal, lightDir);
-
-				//Sum
-				finalColor += clamp(float4(_directionalLightIntensity*(difuseComp+specularComp),1),0,1);
-				*/
-#endif
-#if POINT_LIGHT_ON
-				/*
-				//Point light properties
-				lightColor = _pointLightColor.xyz;
-				lightDir = _pointLightPos - i.wPos;
-				float lightDist = length(lightDir);
-				lightDir = lightDir / lightDist;
-				//lightDir *= 4 * 3.14;
-
-				//Diffuse componenet
-				difuseComp = lightColor * _diffuseInt * clamp(dot(lightDir, i.worldNormal), 0, 1)/ lightDist;
-
-				//Specular component	
-				viewVec = normalize(_WorldSpaceCameraPos - i.wPos);
-
-				//Specular component
-				//phong
-				//float3 halfVec = reflect(-lightDir, i.worldNormal);
-				//fixed4 specularComp = lightColor * pow(clamp(dot(halfVec, viewVec),0,1), _specularAlpha);
-
-				//blinnPhong
-				//halfVec = normalize(viewVec + lightDir);
-				specularComp = lightColor * BRDF(_specularAlpha, _fresnelQ, viewVec, i.worldNormal, lightDir) / lightDist;
-
-				//Sum
-				finalColor += clamp(float4(_pointLightIntensity*(difuseComp + specularComp),1),0,1);
-				*/
-				
-#endif
                 
 				return finalColor * _objectColor;
             }
