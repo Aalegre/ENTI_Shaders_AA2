@@ -9,6 +9,9 @@ public class BoidManager : MonoBehaviour
     const int threadGroupSize = 1024;
     public BoidSettings settings;
     public ComputeShader compute;
+    private ComputeBuffer boidBuffer;
+    private int numBoids;
+    private BoidData[] boidData;
     List<Boid> boids;
 
     void Start()
@@ -23,15 +26,12 @@ public class BoidManager : MonoBehaviour
             auxB.Initialize(settings, null);
         }
 
-    }
-
-    void Update()
-    {
-        if (boids != null)
+        if(boids != null)
         {
+            numBoids = boids.Count;
+            boidBuffer = new ComputeBuffer(numBoids, BoidData.Size);
 
-            int numBoids = boids.Count;
-            BoidData[] boidData = new BoidData[numBoids];
+            boidData = new BoidData[numBoids];
 
             for (int i = 0; i < boids.Count; i++)
             {
@@ -39,9 +39,15 @@ public class BoidManager : MonoBehaviour
                 boidData[i].direction = boids[i].forward;
             }
 
-            ComputeBuffer boidBuffer = new ComputeBuffer(numBoids, BoidData.Size);
             boidBuffer.SetData(boidData);
+        }
 
+    }
+
+    void Update()
+    {
+        if (boids != null)
+        {
             compute.SetBuffer(0, "boids", boidBuffer);
             compute.SetInt("numBoids", boids.Count);
             compute.SetFloat("viewRadius", settings.perceptionRadius);
@@ -61,8 +67,6 @@ public class BoidManager : MonoBehaviour
 
                 boids[i].UpdateBoid();
             }
-
-            boidBuffer.Release();
         }
     }
 
@@ -83,5 +87,10 @@ public class BoidManager : MonoBehaviour
                 return sizeof(float) * 3 * 5 + sizeof(int);
             }
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        boidBuffer.Dispose();
     }
 }
