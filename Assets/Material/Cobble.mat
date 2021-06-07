@@ -72,7 +72,7 @@ Material:
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
-    - _ambientInt: 0.1
+    - _ambientInt: 0.01
     - _diffuseInt: 1
     - _fresnelQ: 1
     - _specularAlpha: 0.75
